@@ -55,6 +55,7 @@ def indice_overall(row, index, indice):
 
     return indice
 
+# Mapeei meses em números para facilitar
 indice_tj = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
 indice_mp = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
 
@@ -63,6 +64,7 @@ grouped_data_tj = data_tj.groupby(by=["month"]).first()
 data_mp = pd.read_csv("../mpce-2020/data.csv")
 grouped_data_mp = data_mp.groupby(by=["month"]).first()
 
+# Printa a o índice de transparência por mês
 for row in grouped_data_tj.notna().itertuples():
     indice = indice_overall(row, row.Index, indice_tj)
 print("TJCE: \n", indice)
