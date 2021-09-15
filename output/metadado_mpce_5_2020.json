@@ -1,0 +1,15 @@
+{
+    "year": 2020,
+    "month": 5,
+    "agency": "mpce",
+    "has_login": false,
+    "has_captcha": false,
+    "good_url": false,
+    "data_access_option": 1,
+    "output_format": 2,
+    "has_employee_workplace": true,
+    "has_employee_role": true,
+    "base_remuneration": true,
+    "benefits": 2,
+    "discounts": 2
+}
