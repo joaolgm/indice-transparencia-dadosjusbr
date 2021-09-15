@@ -1,74 +1,81 @@
-import pandas as pd
+import json
 
 
-def indice_overall(row, index, indice):
-    # Lotação
-    if row.workplace == True:
-        indice[index] += 1
-    # Cargo
-    if row.role == True:
-        indice[index] += 1
-    # Remuneração Básica
-    if row.wage == True:
-        indice[index] += 1
-    # Detalhamento de Remuneração Eventual ou Temporária
-    if (
-        row.funds_eventual_benefits == True
-        or row.funds_personal_benefits == True
-        or row.funds_trust_position == True
-        or row.funds_gratification == True
-        or row.funds_daily == True
-        or row.funds_origin_pos == True
-        or row.funds_others_total == True
-    ) and row.funds_total == True:
-        indice[index] += 1
-    elif row.funds_total == True:
-        indice[index] += 0.5
-    # Detalhamento de Indenizações
-    if (
-        row.perks_food == True
-        or row.perks_vacation == True
-        or row.perks_transportation
-        or row.perks_pre_school == True
-        or row.perks_health == True
-        or row.perks_birth == True
-        or row.perks_housing == True
-        or row.perks_subsistence == True
-        or row.perks_compensatory_leave == True
-        or row.perks_pecuniary == True
-        or row.perks_vacation_pecuniary == True
-        or row.perks_furniture_transport == True
-        or row.perks_premium_license_pecuniary == True
-    ) and row.perks_total == True:
-        indice[index] += 1
-    elif row.perks_total == True:
-        indice[index] += 0.5
-    # Detalhamento de Descontos
-    if (
-        row.discount_prev_contribution == True
-        or row.discounts_ceil_retention == True
-        or row.discounts_income_tax == True
-    ) and row.discounts_total == True:
-        indice[index] += 1
-    elif row.discounts_total == True:
-        indice[index] += 0.5
+def calcula_indice(metadado):
+    indice = 0
+
+    # Se não precisa de login, ganha um ponto
+    if metadado["has_login"] == False:
+        indice += 1
+
+    # Se não precisa de captha, ganha um ponto
+    if metadado["has_captcha"] == False:
+        indice += 1
+
+    # Se a url é modicável via máquina, ganha um ponto
+    if metadado["good_url"] == True:
+        indice += 1
+
+    # Se tem api para acessar os dados, ganha um ponto
+    if metadado["data_access_option"] == 0:
+        indice += 1
+    # Se necessita de scraping, ganha meio ponto
+    elif metadado["data_access_option"] == 1:
+        indice += 0.5
+
+    # Se o dado é disponibilizado em CSV ou ODF, ganha um ponto
+    if metadado["output_format"] == 1 or metadado["output_format"] == 5:
+        indice += 1
+
+    # Se tem dado de Lotação, ganha um ponto
+    if metadado["has_employee_workplace"] == True:
+        indice += 1
+
+    # Se tem dado de Cargo, ganha um ponto
+    if metadado["has_employee_role"] == True:
+        indice += 1
+
+    # Se tem dado de Remuneração Básica, ganha um ponto
+    if metadado["base_remuneration"] == True:
+        indice += 1
+
+    # Se só tem o dado total de Benefícios, ganha meio ponto
+    if metadado["benefits"] == 1:
+        indice += 0.5
+    # Se detalha o dado de Benefícios, ganha um ponto
+    elif metadado["benefits"] == 2:
+        indice += 1
+
+    # Se só tem o dado total de Descontos, ganha meio ponto
+    if metadado["discounts"] == 1:
+        indice += 0.5
+    # Se detalha o dado de Discontos, ganha um ponto
+    elif metadado["discounts"] == 2:
+        indice += 1
 
     return indice
 
-# Mapeei meses em números para facilitar
-indice_tj = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
-indice_mp = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
 
-data_tj = pd.read_csv("../tjce-2020/data.csv")
-grouped_data_tj = data_tj.groupby(by=["month"]).first()
-data_mp = pd.read_csv("../mpce-2020/data.csv")
-grouped_data_mp = data_mp.groupby(by=["month"]).first()
-
-# Printa a o índice de transparência por mês
-for row in grouped_data_tj.notna().itertuples():
-    indice = indice_overall(row, row.Index, indice_tj)
-print("TJCE: \n", indice)
-
-for row in grouped_data_mp.notna().itertuples():
-    indice = indice_overall(row, row.Index, indice_mp)
-print("MPCE: \n", indice)
+metadado_path = [
+    "./output/metadado_mpce_3_2020.json",
+    "./output/metadado_mpce_4_2020.json",
+    "./output/metadado_mpce_5_2020.json",
+    "./output/metadado_tjce_3_2020.json",
+    "./output/metadado_tjce_4_2020.json",
+    "./output/metadado_tjce_5_2020.json",
+]
+for i in metadado_path:
+    with open(i) as json_file:
+        data = json.load(json_file)
+        indice = calcula_indice(data)
+        pp = (
+            "Indice de transparência do "
+            + data["agency"]
+            + " em 0"
+            + str(data["month"])
+            + "/"
+            + str(data["year"])
+            + ": "
+            + str(indice)
+        )
+        print(pp)
