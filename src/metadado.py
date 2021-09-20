@@ -4,49 +4,51 @@ import json
 
 class Metadado:
 
-    has_employee_workplace = False
-    has_employee_role = False
-    base_remuneration = False
-    benefits = 0
-    discounts = 0
+    tem_matricula = False
+    tem_lotacao = False
+    tem_cargo = False
+    remuneracao_base = False
+    outras_remuneracoes = 0
+    descontos = 0
 
     def __init__(
         self,
-        year,
-        month,
-        agency,
-        has_login,
-        has_captcha,
-        good_url,
-        data_access_option,
-        output_format,
+        ano,
+        mes,
+        id_orgao,
+        nao_requer_login,
+        nao_requer_captcha,
+        acesso_ao_dado,
+        extensao,
+        estritamente_tabular
     ):
-        self.year = year
-        self.month = month
-        self.agency = agency
-        self.has_login = has_login
-        self.has_captcha = has_captcha
-        self.good_url = good_url
-        self.data_access_option = data_access_option
-        self.output_format = output_format
+        self.ano = ano
+        self.mes = mes
+        self.id_orgao = id_orgao
+        self.nao_requer_login = nao_requer_login
+        self.nao_requer_captcha = nao_requer_captcha
+        self.acesso_ao_dado = acesso_ao_dado
+        self.extensao = extensao
+        self.estritamente_tabular = estritamente_tabular
 
     def __repr__(self):
         return (
-            "<Metadado: year:%s, month:%s, agency: %s, has_login:%s, has_captcha:%s, good_url: %s, data_access_option:%s, output_format:%s, has_employee_workplace: %s, has_employee_role:%s, base_remuneration: %s, benefits:%s, discounts:%s>"
+            "<Metadado: ano: %s, mes: %s, id_orgao: %s, nao_requer_login: %s, nao_requer_captcha: %s, acesso_ao_dado: %s, extensao: %s, estritamente_tabular: %s, tem_matricula: %s, tem_lotacao: %s, tem_cargo: %s, remuneracao_base: %s, outras_remuneracoes: %s, descontos: %s>"
             % (
-                self.year,
-                self.month,
-                self.agency,
-                self.has_login,
-                self.has_captcha,
-                self.good_url,
-                self.data_access_option,
-                self.output_format,
-                self.has_employee_workplace,
-                self.has_employee_role,
-                self.base_remuneration,
-                self.benefits,
-                self.discounts,
+                self.ano,
+                self.mes,
+                self.id_orgao,
+                self.nao_requer_login,
+                self.nao_requer_captcha,
+                self.acesso_ao_dado,
+                self.extensao,
+                self.estritamente_tabular,
+                self.tem_matricula,
+                self.tem_lotacao,
+                self.tem_cargo,
+                self.remuneracao_base,
+                self.outras_remuneracoes,
+                self.descontos,
             )
         )
 
@@ -54,44 +56,49 @@ class Metadado:
         return json.dumps(self, default=lambda o: o.__dict__, indent=4)
 
 
-class DataAccessOption(Metadado):
-    api = 0
-    scraping = 1
-    user_emulation = 2
+class FormaDeAcesso(Metadado):
+    acesso_direto = 0
+    amigavel_para_raspagem = 1
+    raspagem_dificultada = 2
+    necessita_simulacao_usuario = 3
 
 
-class InfoCompletenessOptions(Metadado):
-    absence = 0
-    summary = 1
-    details = 2
+class OpcoesDetalhamento(Metadado):
+    ausencia = 0
+    sumarizado = 1
+    detalhado = 2
 
 
-class OutputFormat(Metadado):
+class Extensao(Metadado):
     pdf = 0
-    odf = 1
+    ods = 1
     xls = 2
     json = 3
-    html = 4
-    csv = 5
+    csv = 4
 
 
 def indice_overall(row, indice):
+    # Matrícula
+    if row.reg == True:
+        indice.tem_matricula = True
+    else:
+        indice.tem_matricula = False
     # Lotação
     if row.workplace == True:
-        indice.has_employee_workplace = True
+        indice.tem_lotacao = True
     else:
-        indice.has_employee_workplace = False
+        indice.tem_lotacao = False
     # Cargo
     if row.role == True:
-        indice.has_employee_role = True
+        indice.tem_cargo = True
     else:
-        indice.has_employee_role = False
+        indice.tem_cargo = False
     # Remuneração Básica
     if row.wage == True:
-        indice.base_remuneration = True
+        indice.remuneracao_base = True
     else:
 
-        indice.base_remuneration = False
+        indice.remuneracao_base = False
     # Detalhamento de Indenizações
     if (
         row.perks_food == True
@@ -108,18 +115,18 @@ def indice_overall(row, indice):
         or row.perks_furniture_transport == True
         or row.perks_premium_license_pecuniary == True
     ) and row.perks_total == True:
-        indice.benefits = InfoCompletenessOptions.details
+        indice.outras_remuneracoes = OpcoesDetalhamento.detalhado
     elif row.perks_total == True:
-        indice.benefits = InfoCompletenessOptions.summary
+        indice.outras_remuneracoes = OpcoesDetalhamento.sumarizado
     # Detalhamento de Descontos
     if (
         row.discount_prev_contribution == True
         or row.discounts_ceil_retention == True
         or row.discounts_income_tax == True
     ) and row.discounts_total == True:
-        indice.discounts = InfoCompletenessOptions.details
+        indice.descontos = OpcoesDetalhamento.detalhado
     elif row.discounts_total == True:
-        indice.discounts = InfoCompletenessOptions.summary
+        indice.descontos = OpcoesDetalhamento.sumarizado
 
     return indice
 
@@ -137,20 +144,20 @@ for row in grouped_data_tj.notna().itertuples():
             2020,
             3,
             "tjce",
-            False,
-            False,
-            False,
-            DataAccessOption.user_emulation,
-            OutputFormat.xls,
+            True,
+            True,
+            FormaDeAcesso.necessita_simulacao_usuario,
+            Extensao.xls,
+            False
         )
         indice_mar = indice_overall(row, metaindice_mar)
         metadado = (
             "./output/metadado_"
-            + indice_mar.agency
+            + indice_mar.id_orgao
             + "_"
-            + str(indice_mar.month)
+            + str(indice_mar.mes)
             + "_"
-            + str(indice_mar.year)
+            + str(indice_mar.ano)
             + ".json"
         )
         with open(metadado, "w") as outfile:
@@ -160,20 +167,20 @@ for row in grouped_data_tj.notna().itertuples():
             2020,
             4,
             "tjce",
-            False,
-            False,
-            False,
-            DataAccessOption.user_emulation,
-            OutputFormat.xls,
+            True,
+            True,
+            FormaDeAcesso.necessita_simulacao_usuario,
+            Extensao.xls,
+            False
         )
         indice_abr = indice_overall(row, metaindice_abr)
         metadado = (
             "./output/metadado_"
-            + indice_abr.agency
+            + indice_abr.id_orgao
             + "_"
-            + str(indice_abr.month)
+            + str(indice_abr.mes)
             + "_"
-            + str(indice_abr.year)
+            + str(indice_abr.ano)
             + ".json"
         )
         with open(metadado, "w") as outfile:
@@ -183,20 +190,20 @@ for row in grouped_data_tj.notna().itertuples():
             2020,
             5,
             "tjce",
-            False,
-            False,
-            False,
-            DataAccessOption.user_emulation,
-            OutputFormat.xls,
+            True,
+            True,
+            FormaDeAcesso.necessita_simulacao_usuario,
+            Extensao.xls,
+            False
         )
         indice_mai = indice_overall(row, metaindice_mai)
         metadado = (
             "./output/metadado_"
-            + indice_mai.agency
+            + indice_mai.id_orgao
             + "_"
-            + str(indice_mai.month)
+            + str(indice_mai.mes)
             + "_"
-            + str(indice_mai.year)
+            + str(indice_mai.ano)
             + ".json"
         )
         with open(metadado, "w") as outfile:
@@ -208,20 +215,20 @@ for row in grouped_data_mp.notna().itertuples():
             2020,
             3,
             "mpce",
-            False,
-            False,
-            False,
-            DataAccessOption.scraping,
-            OutputFormat.xls,
+            True,
+            True,
+            FormaDeAcesso.amigavel_para_raspagem,
+            Extensao.xls,
+            False
         )
         indice_mar = indice_overall(row, metaindice_mar)
         metadado = (
             "./output/metadado_"
-            + indice_mar.agency
+            + indice_mar.id_orgao
             + "_"
-            + str(indice_mar.month)
+            + str(indice_mar.mes)
             + "_"
-            + str(indice_mar.year)
+            + str(indice_mar.ano)
             + ".json"
         )
         with open(metadado, "w") as outfile:
@@ -231,20 +238,20 @@ for row in grouped_data_mp.notna().itertuples():
             2020,
             4,
             "mpce",
-            False,
-            False,
-            False,
-            DataAccessOption.scraping,
-            OutputFormat.xls,
+            True,
+            True,
+            FormaDeAcesso.amigavel_para_raspagem,
+            Extensao.xls,
+            False
         )
         indice_abr = indice_overall(row, metaindice_abr)
         metadado = (
             "./output/metadado_"
-            + indice_abr.agency
+            + indice_abr.id_orgao
             + "_"
-            + str(indice_abr.month)
+            + str(indice_abr.mes)
             + "_"
-            + str(indice_abr.year)
+            + str(indice_abr.ano)
             + ".json"
         )
         with open(metadado, "w") as outfile:
@@ -254,20 +261,20 @@ for row in grouped_data_mp.notna().itertuples():
             2020,
             5,
             "mpce",
-            False,
-            False,
-            False,
-            DataAccessOption.scraping,
-            OutputFormat.xls,
+            True,
+            True,
+            FormaDeAcesso.amigavel_para_raspagem,
+            Extensao.xls,
+            False
         )
         indice_mai = indice_overall(row, metaindice_mai)
         metadado = (
             "./output/metadado_"
-            + indice_mai.agency
+            + indice_mai.id_orgao
             + "_"
-            + str(indice_mai.month)
+            + str(indice_mai.mes)
             + "_"
-            + str(indice_mai.year)
+            + str(indice_mai.ano)
             + ".json"
         )
         with open(metadado, "w") as outfile:

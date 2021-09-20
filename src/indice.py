@@ -5,52 +5,52 @@ def calcula_indice(metadado):
     indice = 0
 
     # Se não precisa de login, ganha um ponto
-    if metadado["has_login"] == False:
+    if metadado["nao_requer_login"] == True:
         indice += 1
 
     # Se não precisa de captha, ganha um ponto
-    if metadado["has_captcha"] == False:
-        indice += 1
-
-    # Se a url é modicável via máquina, ganha um ponto
-    if metadado["good_url"] == True:
+    if metadado["nao_requer_captcha"] == True:
         indice += 1
 
     # Se tem api para acessar os dados, ganha um ponto
-    if metadado["data_access_option"] == 0:
+    if metadado["acesso_ao_dado"] == 0:
         indice += 1
     # Se necessita de scraping, ganha meio ponto
-    elif metadado["data_access_option"] == 1:
+    elif metadado["acesso_ao_dado"] == 1:
         indice += 0.5
 
-    # Se o dado é disponibilizado em CSV ou ODF, ganha um ponto
-    if metadado["output_format"] == 1 or metadado["output_format"] == 5:
+    # Se tem dado de Matrícula, ganha um ponto
+    if metadado["tem_matricula"] == True:
         indice += 1
 
     # Se tem dado de Lotação, ganha um ponto
-    if metadado["has_employee_workplace"] == True:
+    if metadado["tem_lotacao"] == True:
         indice += 1
 
     # Se tem dado de Cargo, ganha um ponto
-    if metadado["has_employee_role"] == True:
+    if metadado["tem_cargo"] == True:
         indice += 1
 
     # Se tem dado de Remuneração Básica, ganha um ponto
-    if metadado["base_remuneration"] == True:
+    if metadado["remuneracao_base"] == True:
         indice += 1
 
     # Se só tem o dado total de Benefícios, ganha meio ponto
-    if metadado["benefits"] == 1:
+    if metadado["outras_remuneracoes"] == 1:
         indice += 0.5
     # Se detalha o dado de Benefícios, ganha um ponto
-    elif metadado["benefits"] == 2:
+    elif metadado["outras_remuneracoes"] == 2:
         indice += 1
 
     # Se só tem o dado total de Descontos, ganha meio ponto
-    if metadado["discounts"] == 1:
+    if metadado["descontos"] == 1:
         indice += 0.5
     # Se detalha o dado de Discontos, ganha um ponto
-    elif metadado["discounts"] == 2:
+    elif metadado["descontos"] == 2:
+        indice += 1
+    
+    # Se o dado é estritamente tabular, ganha um ponto
+    if metadado["estritamente_tabular"] == True:
         indice += 1
 
     return indice
@@ -64,18 +64,20 @@ metadado_path = [
     "./output/metadado_tjce_4_2020.json",
     "./output/metadado_tjce_5_2020.json",
 ]
+indice_maximo = 10  # Máximo de pontos que um órgão pode atingir
 for i in metadado_path:
     with open(i) as json_file:
         data = json.load(json_file)
-        indice = calcula_indice(data)
+        indice = (calcula_indice(data) / indice_maximo) * 100
         pp = (
             "Indice de transparência do "
-            + data["agency"]
+            + data["id_orgao"]
             + " em 0"
-            + str(data["month"])
+            + str(data["mes"])
             + "/"
-            + str(data["year"])
+            + str(data["ano"])
             + ": "
             + str(indice)
+            + "%"
         )
         print(pp)
