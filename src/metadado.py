@@ -57,24 +57,24 @@ class Metadado:
 
 
 class FormaDeAcesso(Metadado):
-    acesso_direto = 0
-    amigavel_para_raspagem = 1
-    raspagem_dificultada = 2
-    necessita_simulacao_usuario = 3
+    ACESSO_DIRETO = 0
+    AMIGAVEL_PARA_RASPAGEM = 1
+    RASPAGEM_DIFICULTADA = 2
+    NECESSITA_SIMULACAO_USUARIO = 3
 
 
 class OpcoesDetalhamento(Metadado):
-    ausencia = 0
-    sumarizado = 1
-    detalhado = 2
+    AUSENCIA = 0
+    SUMARIZADO = 1
+    DETALHADO = 2
 
 
 class Extensao(Metadado):
-    pdf = 0
-    ods = 1
-    xls = 2
-    json = 3
-    csv = 4
+    PDF = 0
+    ODS = 1
+    XLS = 2
+    JSON = 3
+    CSV = 4
 
 
 def indice_overall(row, indice):
@@ -115,18 +115,18 @@ def indice_overall(row, indice):
         or row.perks_furniture_transport == True
         or row.perks_premium_license_pecuniary == True
     ) and row.perks_total == True:
-        indice.outras_remuneracoes = OpcoesDetalhamento.detalhado
+        indice.outras_remuneracoes = OpcoesDetalhamento.DETALHADO
     elif row.perks_total == True:
-        indice.outras_remuneracoes = OpcoesDetalhamento.sumarizado
+        indice.outras_remuneracoes = OpcoesDetalhamento.SUMARIZADO
     # Detalhamento de Descontos
     if (
         row.discount_prev_contribution == True
         or row.discounts_ceil_retention == True
         or row.discounts_income_tax == True
     ) and row.discounts_total == True:
-        indice.descontos = OpcoesDetalhamento.detalhado
+        indice.descontos = OpcoesDetalhamento.DETALHADO
     elif row.discounts_total == True:
-        indice.descontos = OpcoesDetalhamento.sumarizado
+        indice.descontos = OpcoesDetalhamento.SUMARIZADO
 
     return indice
 
@@ -146,8 +146,8 @@ for row in grouped_data_tj.notna().itertuples():
             "tjce",
             True,
             True,
-            FormaDeAcesso.necessita_simulacao_usuario,
-            Extensao.xls,
+            FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO,
+            Extensao.XLS,
             False
         )
         indice_mar = indice_overall(row, metaindice_mar)
@@ -169,8 +169,8 @@ for row in grouped_data_tj.notna().itertuples():
             "tjce",
             True,
             True,
-            FormaDeAcesso.necessita_simulacao_usuario,
-            Extensao.xls,
+            FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO,
+            Extensao.XLS,
             False
         )
         indice_abr = indice_overall(row, metaindice_abr)
@@ -192,8 +192,8 @@ for row in grouped_data_tj.notna().itertuples():
             "tjce",
             True,
             True,
-            FormaDeAcesso.necessita_simulacao_usuario,
-            Extensao.xls,
+            FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO,
+            Extensao.XLS,
             False
         )
         indice_mai = indice_overall(row, metaindice_mai)
@@ -217,8 +217,8 @@ for row in grouped_data_mp.notna().itertuples():
             "mpce",
             True,
             True,
-            FormaDeAcesso.amigavel_para_raspagem,
-            Extensao.xls,
+            FormaDeAcesso.AMIGAVEL_PARA_RASPAGEM,
+            Extensao.XLS,
             False
         )
         indice_mar = indice_overall(row, metaindice_mar)
@@ -240,8 +240,8 @@ for row in grouped_data_mp.notna().itertuples():
             "mpce",
             True,
             True,
-            FormaDeAcesso.amigavel_para_raspagem,
-            Extensao.xls,
+            FormaDeAcesso.AMIGAVEL_PARA_RASPAGEM,
+            Extensao.XLS,
             False
         )
         indice_abr = indice_overall(row, metaindice_abr)
@@ -263,8 +263,8 @@ for row in grouped_data_mp.notna().itertuples():
             "mpce",
             True,
             True,
-            FormaDeAcesso.amigavel_para_raspagem,
-            Extensao.xls,
+            FormaDeAcesso.AMIGAVEL_PARA_RASPAGEM,
+            Extensao.XLS,
             False
         )
         indice_mai = indice_overall(row, metaindice_mai)
