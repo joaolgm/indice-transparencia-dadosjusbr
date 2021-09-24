@@ -1,0 +1,17 @@
+{
+    "ano": 2019,
+    "mes": 10,
+    "id_orgao": "tjpr",
+    "nao_requer_login": true,
+    "nao_requer_captcha": true,
+    "acesso_ao_dado": 3,
+    "extensao": 2,
+    "estritamente_tabular": true,
+    "formato_consistente": true,
+    "tem_matricula": true,
+    "tem_lotacao": false,
+    "tem_cargo": false,
+    "remuneracao_base": true,
+    "outras_remuneracoes": 2,
+    "descontos": 2
+}

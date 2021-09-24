@@ -48,23 +48,45 @@ def calcula_indice(metadado):
     # Se detalha o dado de Discontos, ganha um ponto
     elif metadado["descontos"] == 2:
         indice += 1
-    
+
     # Se o dado é estritamente tabular, ganha um ponto
     if metadado["estritamente_tabular"] == True:
+        indice += 1
+
+    # Se o dado foi exposto no mesmo formato (quantidade e ordenação de colunas) queo mês passado, ganha um ponto
+    if metadado["formato_consistente"] == True:
         indice += 1
 
     return indice
 
 
 metadado_path = [
-    "./output/metadado_mpce_3_2020.json",
-    "./output/metadado_mpce_4_2020.json",
-    "./output/metadado_mpce_5_2020.json",
-    "./output/metadado_tjce_3_2020.json",
-    "./output/metadado_tjce_4_2020.json",
-    "./output/metadado_tjce_5_2020.json",
+    "./output/metadado_mpto_1_2019.json",
+    "./output/metadado_mpto_2_2019.json",
+    "./output/metadado_mpto_3_2019.json",
+    "./output/metadado_mpto_4_2019.json",
+    "./output/metadado_mpto_5_2019.json",
+    "./output/metadado_mpto_6_2019.json",
+    "./output/metadado_mpto_7_2019.json",
+    "./output/metadado_mpto_8_2019.json",
+    "./output/metadado_mpto_9_2019.json",
+    "./output/metadado_mpto_10_2019.json",
+    "./output/metadado_mpto_11_2019.json",
+    "./output/metadado_mpto_12_2019.json",
+    "./output/metadado_tjpr_1_2019.json",
+    "./output/metadado_tjpr_2_2019.json",
+    "./output/metadado_tjpr_3_2019.json",
+    "./output/metadado_tjpr_4_2019.json",
+    "./output/metadado_tjpr_5_2019.json",
+    "./output/metadado_tjpr_6_2019.json",
+    "./output/metadado_tjpr_7_2019.json",
+    "./output/metadado_tjpr_8_2019.json",
+    "./output/metadado_tjpr_9_2019.json",
+    "./output/metadado_tjpr_10_2019.json",
+    "./output/metadado_tjpr_11_2019.json",
+    "./output/metadado_tjpr_12_2019.json",
 ]
-indice_maximo = 10  # Máximo de pontos que um órgão pode atingir
+indice_maximo = 11  # Máximo de pontos que um órgão pode atingir
 for i in metadado_path:
     with open(i) as json_file:
         data = json.load(json_file)
@@ -72,12 +94,12 @@ for i in metadado_path:
         pp = (
             "Indice de transparência do "
             + data["id_orgao"]
-            + " em 0"
+            + " em "
             + str(data["mes"])
             + "/"
             + str(data["ano"])
             + ": "
-            + str(indice)
+            + str(round(indice, 2))
             + "%"
         )
         print(pp)

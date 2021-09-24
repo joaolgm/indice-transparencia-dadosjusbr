@@ -1,5 +1,7 @@
 import pandas as pd
 import json
+import checa
+import completude
 
 
 class Metadado:
@@ -20,7 +22,8 @@ class Metadado:
         nao_requer_captcha,
         acesso_ao_dado,
         extensao,
-        estritamente_tabular
+        estritamente_tabular,
+        formato_consistente,
     ):
         self.ano = ano
         self.mes = mes
@@ -30,10 +33,11 @@ class Metadado:
         self.acesso_ao_dado = acesso_ao_dado
         self.extensao = extensao
         self.estritamente_tabular = estritamente_tabular
+        self.formato_consistente = formato_consistente
 
     def __repr__(self):
         return (
-            "<Metadado: ano: %s, mes: %s, id_orgao: %s, nao_requer_login: %s, nao_requer_captcha: %s, acesso_ao_dado: %s, extensao: %s, estritamente_tabular: %s, tem_matricula: %s, tem_lotacao: %s, tem_cargo: %s, remuneracao_base: %s, outras_remuneracoes: %s, descontos: %s>"
+            "<Metadado: ano: %s, mes: %s, id_orgao: %s, nao_requer_login: %s, nao_requer_captcha: %s, acesso_ao_dado: %s, extensao: %s, estritamente_tabular: %s, formato_consistente: %s, tem_matricula: %s, tem_lotacao: %s, tem_cargo: %s, remuneracao_base: %s, outras_remuneracoes: %s, descontos: %s>"
             % (
                 self.ano,
                 self.mes,
@@ -43,6 +47,7 @@ class Metadado:
                 self.acesso_ao_dado,
                 self.extensao,
                 self.estritamente_tabular,
+                self.formato_consistente,
                 self.tem_matricula,
                 self.tem_lotacao,
                 self.tem_cargo,
@@ -77,205 +82,97 @@ class Extensao(Metadado):
     CSV = 4
 
 
-def indice_overall(row, indice):
-    # Matrícula
-    if row.reg == True:
-        indice.tem_matricula = True
-    else:
-        indice.tem_matricula = False
-    # Lotação
-    if row.workplace == True:
-        indice.tem_lotacao = True
-    else:
-        indice.tem_lotacao = False
-    # Cargo
-    if row.role == True:
-        indice.tem_cargo = True
-    else:
-        indice.tem_cargo = False
-    # Remuneração Básica
-    if row.wage == True:
-        indice.remuneracao_base = True
-    else:
+def map_indice(metaindice, resumo):
+    metaindice.tem_matricula = resumo[0]
+    metaindice.tem_lotacao = resumo[1]
+    metaindice.tem_cargo = resumo[2]
+    metaindice.remuneracao_base = resumo[3]
 
-        indice.remuneracao_base = False
-    # Detalhamento de Indenizações
-    if (
-        row.perks_food == True
-        or row.perks_vacation == True
-        or row.perks_transportation
-        or row.perks_pre_school == True
-        or row.perks_health == True
-        or row.perks_birth == True
-        or row.perks_housing == True
-        or row.perks_subsistence == True
-        or row.perks_compensatory_leave == True
-        or row.perks_pecuniary == True
-        or row.perks_vacation_pecuniary == True
-        or row.perks_furniture_transport == True
-        or row.perks_premium_license_pecuniary == True
-    ) and row.perks_total == True:
-        indice.outras_remuneracoes = OpcoesDetalhamento.DETALHADO
-    elif row.perks_total == True:
-        indice.outras_remuneracoes = OpcoesDetalhamento.SUMARIZADO
-    # Detalhamento de Descontos
-    if (
-        row.discount_prev_contribution == True
-        or row.discounts_ceil_retention == True
-        or row.discounts_income_tax == True
-    ) and row.discounts_total == True:
-        indice.descontos = OpcoesDetalhamento.DETALHADO
-    elif row.discounts_total == True:
-        indice.descontos = OpcoesDetalhamento.SUMARIZADO
+    if resumo[4] == 0:
+        metaindice.outras_remuneracoes = OpcoesDetalhamento.AUSENCIA
+    elif resumo[4] == 1:
+        metaindice.outras_remuneracoes = OpcoesDetalhamento.SUMARIZADO
+    else:
+        metaindice.outras_remuneracoes = OpcoesDetalhamento.DETALHADO
 
-    return indice
+    if resumo[5] == 0:
+        metaindice.descontos = OpcoesDetalhamento.AUSENCIA
+    elif resumo[5] == 1:
+        metaindice.descontos = OpcoesDetalhamento.SUMARIZADO
+    else:
+        metaindice.descontos = OpcoesDetalhamento.DETALHADO
 
 
 data_tj = pd.read_csv("./data/tjce-2020/data.csv")
 grouped_data_tj = data_tj.groupby(by=["month"]).first()
 data_mp = pd.read_csv("./data/mpce-2020/data.csv")
 grouped_data_mp = data_mp.groupby(by=["month"]).first()
+data_mpto = pd.read_csv("./data/mpto-2019/data.csv")
+grouped_data_mpto = data_mpto.groupby(by=["month"]).first()
+data_tjpr = pd.read_csv("./data/tjpr-2019/data.csv")
+grouped_data_tjpr = data_tjpr.groupby(by=["month"]).first()
+
+data_checa_completude_mpto = data_mpto.groupby(by=["month"])
+completude_metaindice_mpto = []
+
+for data in data_checa_completude_mpto:
+    completude_metaindice_mpto.append(completude.checa_completude(data[1]))
+
+for index, row in grouped_data_mpto.iterrows():
+
+    metaindice = Metadado(
+        2019,
+        index,
+        "mpto",
+        True,
+        True,
+        FormaDeAcesso.RASPAGEM_DIFICULTADA,
+        Extensao.XLS,
+        False,
+        False,
+    )
+    map_indice(metaindice, completude_metaindice_mpto[index - 1])
+    metadado = (
+        "./output/metadado_"
+        + metaindice.id_orgao
+        + "_"
+        + str(metaindice.mes)
+        + "_"
+        + str(metaindice.ano)
+        + ".json"
+    )
+    with open(metadado, "w") as outfile:
+        outfile.write(metaindice.toJSON())
 
 
-# Utilizei 3 meses como exemplo
-for row in grouped_data_tj.notna().itertuples():
-    if row.Index == 3:
-        metaindice_mar = Metadado(
-            2020,
-            3,
-            "tjce",
-            True,
-            True,
-            FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO,
-            Extensao.XLS,
-            False
-        )
-        indice_mar = indice_overall(row, metaindice_mar)
-        metadado = (
-            "./output/metadado_"
-            + indice_mar.id_orgao
-            + "_"
-            + str(indice_mar.mes)
-            + "_"
-            + str(indice_mar.ano)
-            + ".json"
-        )
-        with open(metadado, "w") as outfile:
-            outfile.write(indice_mar.toJSON())
-    elif row.Index == 4:
-        metaindice_abr = Metadado(
-            2020,
-            4,
-            "tjce",
-            True,
-            True,
-            FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO,
-            Extensao.XLS,
-            False
-        )
-        indice_abr = indice_overall(row, metaindice_abr)
-        metadado = (
-            "./output/metadado_"
-            + indice_abr.id_orgao
-            + "_"
-            + str(indice_abr.mes)
-            + "_"
-            + str(indice_abr.ano)
-            + ".json"
-        )
-        with open(metadado, "w") as outfile:
-            outfile.write(indice_abr.toJSON())
-    elif row.Index == 5:
-        metaindice_mai = Metadado(
-            2020,
-            5,
-            "tjce",
-            True,
-            True,
-            FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO,
-            Extensao.XLS,
-            False
-        )
-        indice_mai = indice_overall(row, metaindice_mai)
-        metadado = (
-            "./output/metadado_"
-            + indice_mai.id_orgao
-            + "_"
-            + str(indice_mai.mes)
-            + "_"
-            + str(indice_mai.ano)
-            + ".json"
-        )
-        with open(metadado, "w") as outfile:
-            outfile.write(indice_mai.toJSON())
+data_checa_completude_tjpr = data_tjpr.groupby(by=["month"])
+completude_metaindice_tjpr = []
 
-for row in grouped_data_mp.notna().itertuples():
-    if row.Index == 3:
-        metaindice_mar = Metadado(
-            2020,
-            3,
-            "mpce",
-            True,
-            True,
-            FormaDeAcesso.AMIGAVEL_PARA_RASPAGEM,
-            Extensao.XLS,
-            False
-        )
-        indice_mar = indice_overall(row, metaindice_mar)
-        metadado = (
-            "./output/metadado_"
-            + indice_mar.id_orgao
-            + "_"
-            + str(indice_mar.mes)
-            + "_"
-            + str(indice_mar.ano)
-            + ".json"
-        )
-        with open(metadado, "w") as outfile:
-            outfile.write(indice_mar.toJSON())
-    elif row.Index == 4:
-        metaindice_abr = Metadado(
-            2020,
-            4,
-            "mpce",
-            True,
-            True,
-            FormaDeAcesso.AMIGAVEL_PARA_RASPAGEM,
-            Extensao.XLS,
-            False
-        )
-        indice_abr = indice_overall(row, metaindice_abr)
-        metadado = (
-            "./output/metadado_"
-            + indice_abr.id_orgao
-            + "_"
-            + str(indice_abr.mes)
-            + "_"
-            + str(indice_abr.ano)
-            + ".json"
-        )
-        with open(metadado, "w") as outfile:
-            outfile.write(indice_abr.toJSON())
-    elif row.Index == 5:
-        metaindice_mai = Metadado(
-            2020,
-            5,
-            "mpce",
-            True,
-            True,
-            FormaDeAcesso.AMIGAVEL_PARA_RASPAGEM,
-            Extensao.XLS,
-            False
-        )
-        indice_mai = indice_overall(row, metaindice_mai)
-        metadado = (
-            "./output/metadado_"
-            + indice_mai.id_orgao
-            + "_"
-            + str(indice_mai.mes)
-            + "_"
-            + str(indice_mai.ano)
-            + ".json"
-        )
-        with open(metadado, "w") as outfile:
-            outfile.write(indice_mai.toJSON())
+for data in data_checa_completude_tjpr:
+    completude_metaindice_tjpr.append(completude.checa_completude(data[1]))
+
+for index, row in grouped_data_tjpr.iterrows():
+
+    metaindice = Metadado(
+        2019,
+        index,
+        "tjpr",
+        True,
+        True,
+        FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO,
+        Extensao.XLS,
+        True,
+        True,
+    )
+    map_indice(metaindice, completude_metaindice_tjpr[index - 1])
+    metadado = (
+        "./output/metadado_"
+        + metaindice.id_orgao
+        + "_"
+        + str(metaindice.mes)
+        + "_"
+        + str(metaindice.ano)
+        + ".json"
+    )
+    with open(metadado, "w") as outfile:
+        outfile.write(metaindice.toJSON())
